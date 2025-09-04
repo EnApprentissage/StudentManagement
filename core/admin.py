@@ -1,79 +1,63 @@
-
 from django.contrib import admin
 from .models import (
     AcademicYear,
     Semester,
     Class,
-    Profile,
-    Student,
     Teacher,
+    Student,
     Subject,
-    TeachingAssignment,
-    EvaluationType,
     Grade,
-    Schedule,
     Absence
 )
 
+@admin.register(AcademicYear)
 class AcademicYearAdmin(admin.ModelAdmin):
-    list_display = ('start_date', 'end_date')
+    list_display = ('start_date', 'end_date', 'is_current')
+    list_filter = ('is_current',)
     ordering = ('-start_date',)
 
+@admin.register(Semester)
 class SemesterAdmin(admin.ModelAdmin):
     list_display = ('name', 'academic_year')
     list_filter = ('academic_year',)
-
-class ClassAdmin(admin.ModelAdmin):
-    list_display = ('level', 'name')
-    search_fields = ('name', 'level')
-
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'gender', 'birth_date', 'phone', 'address')
-    search_fields = ('user__first_name', 'user__last_name', 'phone')
-
-class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'student_class', 'academic_year')
-    search_fields = ('user__first_name', 'user__last_name')
-
-class TeacherAdmin(admin.ModelAdmin):
-    list_display = ('user', 'specialty')
-    search_fields = ('user__first_name', 'user__last_name')
-
-class SubjectAdmin(admin.ModelAdmin):
-    list_display = ('name',)
     search_fields = ('name',)
 
-class TeachingAssignmentAdmin(admin.ModelAdmin):
-    list_display = ('teacher', 'subject', 'assigned_class', 'academic_year')
-    list_filter = ('academic_year', 'assigned_class')
+@admin.register(Class)
+class ClassAdmin(admin.ModelAdmin):
+    list_display = ('name', 'level', 'academic_year', 'max_students')
+    list_filter = ('academic_year', 'level')
+    search_fields = ('name', 'level')
 
-class EvaluationTypeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'weight')
+@admin.register(Teacher)
+class TeacherAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'specialty', 'employee_id', 'hire_date', 'is_active')
+    search_fields = ('user__first_name', 'user__last_name', 'employee_id')
+    list_filter = ('is_active',)
 
+@admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'student_id', 'student_class', 'academic_year', 'is_active')
+    list_filter = ('student_class', 'is_active')
+    search_fields = ('user__first_name', 'user__last_name', 'student_id')
+
+    def academic_year(self, obj):
+        return obj.student_class.academic_year if obj.student_class else None
+    academic_year.short_description = 'Année académique'
+
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'teacher', 'coefficient', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'code')
+
+@admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
-    list_display = ('student', 'subject', 'value', 'academic_year', 'semester', 'evaluation_type', 'date')
-    list_filter = ('academic_year', 'semester', 'evaluation_type')
-    search_fields = ('student__user__first_name', 'student__user__last_name')
+    list_display = ('student', 'subject', 'value', 'max_value', 'grade_type', 'academic_year', 'date_graded')
+    list_filter = ('grade_type', 'academic_year', 'subject')
+    search_fields = ('student__user__first_name', 'student__user__last_name', 'subject__name')
 
-class ScheduleAdmin(admin.ModelAdmin):
-    list_display = ('teaching', 'weekday', 'start_time', 'end_time')
-    list_filter = ('weekday',)
-
+@admin.register(Absence)
 class AbsenceAdmin(admin.ModelAdmin):
     list_display = ('student', 'date', 'justified')
-    list_filter = ('justified',)
+    list_filter = ('justified', 'date')
     search_fields = ('student__user__first_name', 'student__user__last_name')
-
-
-admin.site.register(AcademicYear, AcademicYearAdmin)
-admin.site.register(Semester, SemesterAdmin)
-admin.site.register(Class, ClassAdmin)
-admin.site.register(Profile, ProfileAdmin)
-admin.site.register(Student, StudentAdmin)
-admin.site.register(Teacher, TeacherAdmin)
-admin.site.register(Subject, SubjectAdmin)
-admin.site.register(TeachingAssignment, TeachingAssignmentAdmin)
-admin.site.register(EvaluationType, EvaluationTypeAdmin)
-admin.site.register(Grade, GradeAdmin)
-admin.site.register(Schedule, ScheduleAdmin)
-admin.site.register(Absence, AbsenceAdmin)

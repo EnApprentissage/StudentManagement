@@ -67,7 +67,7 @@ class Semester(models.Model):
 
 
 class Class(models.Model):
-    """Classe avec niveau et capacité"""
+    
     name = models.CharField(
         max_length=100,
         verbose_name="Nom de la classe",

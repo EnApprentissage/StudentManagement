@@ -1,11 +1,7 @@
 from django import forms
-from django.core.exceptions import ValidationError
-from django.utils import timezone
-from django.contrib.auth.models import User
-
 from .models import (
-    AcademicYear, Semester, Class, Teacher, Student,
-    Subject, Grade, Absence
+    AcademicYear, Period, Class, Teacher, Student, Subject,
+    ClassSubject, Enrollment, Attendance, Grade, Profile
 )
 
 
@@ -13,91 +9,223 @@ class AcademicYearForm(forms.ModelForm):
     class Meta:
         model = AcademicYear
         fields = ['start_date', 'end_date', 'is_current']
+        labels = {
+            'start_date': "Start Date",
+            'end_date': "End Date",
+            'is_current': "Current Year"
+        }
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 
-class SemesterForm(forms.ModelForm):
+class PeriodForm(forms.ModelForm):
     class Meta:
-        model = Semester
-        fields = ['name', 'academic_year']
+        model = Period
+        fields = ['name', 'academic_year', 'start_date', 'end_date', 'is_current']
+        labels = {
+            'name': "Period Name",
+            'academic_year': "Academic Year",
+            'start_date': "Start Date",
+            'end_date': "End Date",
+            'is_current': "Current Period"
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'academic_year': forms.Select(attrs={'class': 'form-select'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'is_current': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
 
 
 class ClassForm(forms.ModelForm):
     class Meta:
         model = Class
-        fields = ['name', 'level', 'max_students', 'academic_year']
+        fields = ['name', 'level', 'max_students', 'academic_year', 'subjects']
+        labels = {
+            'name': "Class Name",
+            'level': "Level",
+            'max_students': "Max Students",
+            'academic_year': "Academic Year",
+            'subjects': "Subjects"
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'level': forms.TextInput(attrs={'class': 'form-control'}),
+            'max_students': forms.NumberInput(attrs={'class': 'form-control'}),
+            'academic_year': forms.Select(attrs={'class': 'form-select'}),
+            'subjects': forms.SelectMultiple(attrs={'class': 'form-select'}),
+        }
 
 
 class TeacherForm(forms.ModelForm):
     class Meta:
         model = Teacher
         fields = ['user', 'specialty', 'employee_id', 'hire_date', 'is_active']
+        labels = {
+            'user': "User",
+            'specialty': "Specialty",
+            'employee_id': "Employee ID",
+            'hire_date': "Hire Date",
+            'is_active': "Active"
+        }
         widgets = {
-            'hire_date': forms.DateInput(attrs={'type': 'date'}),
+            'user': forms.Select(attrs={'class': 'form-select'}),
+            'specialty': forms.TextInput(attrs={'class': 'form-control'}),
+            'employee_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'hire_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = [
-            'user', 'student_id', 'student_class',
-            'date_of_birth', 'enrollment_date', 'is_active'
-        ]
-        widgets = {
-            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
-            'enrollment_date': forms.DateInput(attrs={'type': 'date'}),
+        fields = ['user', 'student_id', 'student_class', 'date_of_birth', 'enrollment_date', 'is_active']
+        labels = {
+            'user': "User",
+            'student_id': "Student ID",
+            'student_class': "Class",
+            'date_of_birth': "Date of Birth",
+            'enrollment_date': "Enrollment Date",
+            'is_active': "Active"
         }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        student_class = cleaned_data.get('student_class')
-
-        if student_class and student_class.is_full:
-            raise ValidationError(f"La classe {student_class.name} est pleine.")
-        return cleaned_data
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-select'}),
+            'student_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_class': forms.Select(attrs={'class': 'form-select'}),
+            'date_of_birth': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'enrollment_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
 
 
 class SubjectForm(forms.ModelForm):
     class Meta:
         model = Subject
         fields = ['name', 'code', 'description', 'coefficient', 'teacher', 'is_active']
+        labels = {
+            'name': "Subject Name",
+            'code': "Code",
+            'description': "Description",
+            'coefficient': "Coefficient",
+            'teacher': "Teacher",
+            'is_active': "Active"
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'coefficient': forms.NumberInput(attrs={'class': 'form-control'}),
+            'teacher': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class ClassSubjectForm(forms.ModelForm):
+    class Meta:
+        model = ClassSubject
+        fields = ['student_class', 'subject', 'teacher', 'period', 'is_active']
+        labels = {
+            'student_class': "Class",
+            'subject': "Subject",
+            'teacher': "Teacher",
+            'period': "Period",
+            'is_active': "Active"
+        }
+        widgets = {
+            'student_class': forms.Select(attrs={'class': 'form-select'}),
+            'subject': forms.Select(attrs={'class': 'form-select'}),
+            'teacher': forms.Select(attrs={'class': 'form-select'}),
+            'period': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class EnrollmentForm(forms.ModelForm):
+    class Meta:
+        model = Enrollment
+        fields = ['student', 'student_class', 'academic_year', 'date_enrolled', 'status']
+        labels = {
+            'student': "Student",
+            'student_class': "Class",
+            'academic_year': "Academic Year",
+            'date_enrolled': "Enrollment Date",
+            'status': "Status"
+        }
+        widgets = {
+            'student': forms.Select(attrs={'class': 'form-select'}),
+            'student_class': forms.Select(attrs={'class': 'form-select'}),
+            'academic_year': forms.Select(attrs={'class': 'form-select'}),
+            'date_enrolled': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+class AttendanceForm(forms.ModelForm):
+    class Meta:
+        model = Attendance
+        fields = ['inscription', 'teacher', 'subject', 'date', 'status', 'reason']
+        labels = {
+            'inscription': "Enrollment",
+            'teacher': "Teacher",
+            'subject': "Subject",
+            'date': "Date",
+            'status': "Status",
+            'reason': "Reason"
+        }
+        widgets = {
+            'inscription': forms.Select(attrs={'class': 'form-select'}),
+            'teacher': forms.Select(attrs={'class': 'form-select'}),
+            'subject': forms.Select(attrs={'class': 'form-select'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
 
 
 class GradeForm(forms.ModelForm):
     class Meta:
         model = Grade
-        fields = [
-            'student', 'subject', 'value', 'max_value', 'grade_type',
-            'academic_year', 'date_graded', 'coefficient', 'comment'
-        ]
+        fields = ['inscription', 'subject', 'period', 'value', 'max_value', 'grade_type', 'date_graded', 'coefficient', 'comment']
+        labels = {
+            'inscription': "Enrollment",
+            'subject': "Subject",
+            'period': "Period",
+            'value': "Grade",
+            'max_value': "Max Grade",
+            'grade_type': "Assessment Type",
+            'date_graded': "Grading Date",
+            'coefficient': "Coefficient",
+            'comment': "Comment"
+        }
         widgets = {
-            'date_graded': forms.DateInput(attrs={'type': 'date'}),
+            'inscription': forms.Select(attrs={'class': 'form-select'}),
+            'subject': forms.Select(attrs={'class': 'form-select'}),
+            'period': forms.Select(attrs={'class': 'form-select'}),
+            'value': forms.NumberInput(attrs={'class': 'form-control', 'step': 0.1}),
+            'max_value': forms.NumberInput(attrs={'class': 'form-control', 'step': 0.1}),
+            'grade_type': forms.Select(attrs={'class': 'form-select'}),
+            'date_graded': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'coefficient': forms.NumberInput(attrs={'class': 'form-control', 'step': 0.1}),
+            'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        value = cleaned_data.get('value')
-        max_value = cleaned_data.get('max_value')
-        student = cleaned_data.get('student')
-        academic_year = cleaned_data.get('academic_year')
 
-        if value and max_value and value > max_value:
-            raise ValidationError("La note ne peut pas être supérieure à la note maximale.")
-
-        if student and student.student_class and student.student_class.academic_year != academic_year:
-            raise ValidationError("L'année académique doit correspondre à celle de la classe de l'étudiant.")
-
-        return cleaned_data
-
-
-class AbsenceForm(forms.ModelForm):
+class ProfileForm(forms.ModelForm):
     class Meta:
-        model = Absence
-        fields = ['student', 'date', 'reason', 'justified']
+        model = Profile
+        fields = ['user', 'role', 'phone']
+        labels = {
+            'user': "User",
+            'role': "Role",
+            'phone': "Phone Number"
+        }
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            'user': forms.Select(attrs={'class': 'form-select'}),
+            'role': forms.Select(attrs={'class': 'form-select'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
         }
